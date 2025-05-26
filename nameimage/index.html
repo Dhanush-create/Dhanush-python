@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Slower Image Reveal Animation v2</title>
+<style>
+  body {
+    margin: 0;
+    height: 100vh;
+    overflow: hidden;
+    background: #000000; 
+    background-image: 
+      radial-gradient(ellipse at 70% 30%, rgba(68, 0, 107, 0.4) 0%, transparent 50%),
+      radial-gradient(ellipse at 30% 70%, rgba(0, 77, 102, 0.4) 0%, transparent 50%),
+      radial-gradient(circle at center, #0a0a1f, #000005);
+    background-blend-mode: screen;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    perspective: 1300px;
+    font-family: 'Arial Black', Gadget, sans-serif;
+  }
+
+  .name-wrapper {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transform-style: preserve-3d;
+    transition: transform 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+  }
+
+  .floating-name {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: clamp(3.2rem, 6.5vw, 5.5rem);
+    font-weight: 900;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    cursor: pointer;
+    user-select: none;
+    transform-style: preserve-3d;
+    position: absolute;
+    width: auto;
+    text-align: center;
+    transition: opacity 0.7s ease-in-out, transform 0.7s ease-in-out;
+  }
+
+  #name-container-outer { /* Dhanush */
+    color: #FFD700; 
+    text-shadow: 
+      0px 1px 0px #c0c0c0,0px 2px 0px #a0a0a0,0px 3px 0px #808080,0px 4px 0px #606060,0px 5px 0px #404040,0px 6px 1px rgba(0,0,0,0.1),0px 0px 5px rgba(0,0,0,0.1),0px 1px 3px rgba(0,0,0,0.3),0px 3px 5px rgba(0,0,0,0.2),0px 5px 10px rgba(0,0,0,0.25),0px 10px 10px rgba(0,0,0,0.2),0px 20px 20px rgba(0,0,0,0.15),0 0 15px #FFD700,0 0 25px #FFD700,0 0 35px #FFA500,0 0 50px #FF8C00;
+    z-index: 15;
+    opacity: 1; 
+  }
+
+  #name-container-inner { /* Dhanurdhar */
+    color: #00BFFF; 
+    text-shadow:
+      0px 1px 0px #ADD8E6,0px 2px 0px #87CEEB,0px 3px 0px #6495ED,0px 4px 0px #4169E1,0px 5px 0px #0000CD,0px 6px 1px rgba(0,0,0,0.1),0 0 15px #00BFFF,0 0 25px #00BFFF,0 0 35px #1E90FF,0 0 50px #4682B4;
+    opacity: 0; 
+    transform: scale(0.5) translateZ(-50px); 
+    z-index: 11; 
+    white-space: nowrap;
+  }
+
+  .image-reveal-container { 
+    position: absolute;
+    width: 200px; 
+    height: 200px; 
+    opacity: 0;
+    transform: scale(0.5) rotateY(70deg) rotateX(20deg) translateZ(-150px); 
+    transition: opacity 0.9s ease-out, transform 1.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+    z-index: 12; 
+    overflow: hidden;
+    border-radius: 12px;
+    border: 2px solid rgba(255, 255, 255, 0.15);
+    box-shadow: 
+      0px 8px 15px rgba(0, 0, 0, 0.4), 
+      inset 0 0 10px rgba(255, 255, 255, 0.05), 
+      0 0 30px rgba(100, 180, 255, 0.25); 
+    transform-style: preserve-3d; 
+  }
+
+  .image-reveal-container img {
+    width: 100%; height: 100%; object-fit: cover;
+    border-radius: 10px; 
+  }
+
+  .floating-name span { 
+    display: inline-block; 
+    position: relative; 
+    transition: transform 0.2s cubic-bezier(0.215, 0.610, 0.355, 1); 
+  }
+  .letter-fragment { position: absolute; pointer-events: none; border-radius: 50%; will-change: transform, opacity; }
+  
+  #swarm-container { 
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+    transform-style: preserve-3d; pointer-events: none; z-index: 1;
+  }
+  .particle { 
+    position: absolute; 
+    background: radial-gradient(circle, rgba(150, 220, 255, 0.8), rgba(50, 150, 255, 0.3));
+    border-radius: 50%; 
+    box-shadow: 0 0 8px rgba(150,220,255,0.7), 0 0 12px rgba(100,180,255,0.5), 0 0 18px rgba(50,100,200,0.3);
+    width: 6px; height: 6px; 
+    will-change: transform, opacity;
+  }
+</style>
+</head>
+<body>
+
+<div class="name-wrapper">
+  <div id="name-container-outer" class="floating-name"></div> 
+  <div id="image-container-1" class="image-reveal-container"><img src="image1.JPEG" alt="Image 1"></div>
+  <div id="image-container-2" class="image-reveal-container"><img src="image6.JPEG" alt="Image 6"></div>
+  <div id="image-container-3" class="image-reveal-container"><img src="image8.JPEG" alt="Image 8"></div>
+    <div id="name-container-inner" class="floating-name"></div> 
+</div>
+
+<div id="swarm-container"></div>
+
+<audio id="background-song" loop>
+  <source src="Tum hi ho.MP3" type="audio/mpeg">
+  Your browser does not support the audio element.
+</audio>
+
+<script>
+  // --- Get DOM Elements ---
+  const outerNameText = "Dhanush";
+  const innerNameText = "Dhanurdhar";
+  const outerNameContainer = document.getElementById('name-container-outer');
+  const innerNameContainer = document.getElementById('name-container-inner');
+  const nameWrapper = document.querySelector('.name-wrapper');
+  const imageContainer1 = document.getElementById('image-container-1');
+  const imageContainer2 = document.getElementById('image-container-2');
+  const imageContainer3 = document.getElementById('image-container-3');
+  
+
+
+  const allImageContainers = [imageContainer1, imageContainer2, imageContainer3];
+  const song = document.getElementById('background-song');
+  const swarmElementContainer = document.getElementById('swarm-container'); 
+
+  // --- Create Name Letters ---
+  function createNameLetters(container, text) {
+    if (!container) { console.error("Container for name letters not found:", text); return; }
+    container.innerHTML = ""; 
+    [...text].forEach(char => {
+      const span = document.createElement('span'); 
+      span.textContent = char;
+      span.style.transform = 'translate3d(0,0,0) rotateX(0deg) rotateY(0deg) rotateZ(0deg)';
+      container.appendChild(span);
+    });
+  }
+  
+  // --- Audio Play/Pause Logic ---
+  let hasInteractedGlobal = false; 
+  let songPlayedOnce = false;    
+
+  // --- Enhanced Letter Dance Animation ---
+  let letterDanceAnimationId = null;
+  let danceTime = 0;
+  const DANCE_SPEED = 0.08; 
+  const Y_OSCILLATION = 4;  
+  const SCALE_PULSE = 0.05; 
+  const Z_PULSE = 8;        
+  const ROTATE_Y_PULSE = 5; 
+
+  function animateLetterDance(nameContainerElement) {
+    if (!nameContainerElement || !song || song.paused || !songPlayedOnce) {
+      if (letterDanceAnimationId) cancelAnimationFrame(letterDanceAnimationId);
+      letterDanceAnimationId = null;
+      if (nameContainerElement) {
+        const letters = nameContainerElement.querySelectorAll('span');
+        letters.forEach(letter => letter.style.transform = 'translateY(0px) scale(1) translateZ(0px) rotateY(0deg)');
+      }
+      return;
+    }
+    danceTime += DANCE_SPEED; 
+    const letters = nameContainerElement.querySelectorAll('span');
+    letters.forEach((letter, index) => {
+      const yOffset = Math.sin(danceTime + index * 0.4) * Y_OSCILLATION; 
+      const scaleFactor = 1 + Math.sin(danceTime * 1.2 + index * 0.6 + Math.PI / 2) * SCALE_PULSE; 
+      const zOffset = Math.cos(danceTime * 0.8 + index * 0.3) * Z_PULSE; 
+      const rotateYFactor = Math.sin(danceTime * 0.6 + index * 0.5 + Math.PI) * ROTATE_Y_PULSE;
+      letter.style.transform = `translateY(${yOffset}px) scale(${scaleFactor}) translateZ(${zOffset}px) rotateY(${rotateYFactor}deg)`;
+    });
+    letterDanceAnimationId = requestAnimationFrame(() => animateLetterDance(nameContainerElement));
+  }
+
+  function startLetterDance(nameContainerElement) {
+    if (!nameContainerElement || !songPlayedOnce || (song && song.paused)) return; 
+    if (letterDanceAnimationId) cancelAnimationFrame(letterDanceAnimationId);
+    danceTime = Math.random() * Math.PI * 2; 
+    animateLetterDance(nameContainerElement);
+  }
+
+  function stopLetterDance(nameContainerElement) {
+    if (letterDanceAnimationId) cancelAnimationFrame(letterDanceAnimationId);
+    letterDanceAnimationId = null;
+    if (nameContainerElement) {
+        const letters = nameContainerElement.querySelectorAll('span');
+        letters.forEach(letter => letter.style.transform = 'translateY(0px) scale(1) translateZ(0px) rotateY(0deg)');
+    }
+  }
+
+  // --- Name Wrapper Mouse Movement ---
+  const MAX_ROTATION_WRAPPER = 8; 
+  const MAX_TRANSLATION_WRAPPER = 15;
+  let nameWrapperBaseTransform = `rotateX(0deg) rotateY(0deg) translateZ(30px) translateX(0px) translateY(0px)`;
+  if (nameWrapper) nameWrapper.style.transform = nameWrapperBaseTransform; 
+
+  document.body.addEventListener('mousemove', (e) => {
+    if (!nameWrapper) return;
+    if (isAnimatingName || (imageContainer1 && imageContainer1.style.opacity === '1' && !isDhanurdharActive) ) {
+        if(imageContainer1 && imageContainer1.style.opacity === '1' && !isDhanurdharActive && !isAnimatingName) {
+             const { clientX, clientY } = e; const { innerWidth, innerHeight } = window;
+             const xOffset = (clientX / innerWidth - 0.5) * 2; 
+             const yOffset = (clientY / innerHeight - 0.5) * 2;
+             const rY = xOffset * MAX_ROTATION_WRAPPER * 0.15; 
+             const rX = -yOffset * MAX_ROTATION_WRAPPER * 0.15; 
+             nameWrapper.style.transform = `rotateX(${rX}deg) rotateY(${rY}deg) translateZ(30px)`;
+        }
+        return; 
+    }
+    const { clientX, clientY } = e; const { innerWidth, innerHeight } = window;
+    const xOffset = (clientX / innerWidth - 0.5) * 2; 
+    const yOffset = (clientY / innerHeight - 0.5) * 2;
+    const rotateY = xOffset * MAX_ROTATION_WRAPPER; 
+    const rotateX = -yOffset * MAX_ROTATION_WRAPPER;
+    const translateX = xOffset * MAX_TRANSLATION_WRAPPER * 0.5; 
+    const translateY = yOffset * MAX_TRANSLATION_WRAPPER * 0.5;
+    nameWrapper.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateZ(30px) translateX(${translateX}px) translateY(${translateY}px)`;
+  });
+  document.body.addEventListener('mouseleave', () => {
+    if (!nameWrapper) return;
+    if (!isAnimatingName && !(imageContainer1 && imageContainer1.style.opacity === '1' && !isDhanurdharActive) ) { 
+        nameWrapper.style.transform = nameWrapperBaseTransform; 
+    }
+  });
+
+  // --- "Dhanurdhar" Random Movement ---
+  let dhanurdharAnimationId = null;
+  let dhanurdharTargetX = 0, dhanurdharTargetY = 0, dhanurdharCurrentX = 0, dhanurdharCurrentY = 0;
+  const dhanurdharMoveSpeed = 0.025; 
+  const dhanurdharChangeTargetInterval = 2500; 
+  let dhanurdharIntervalId = null;
+  let isDhanurdharActive = false;
+  const DHANURDHAR_BASE_Y_OFFSET = 10; 
+
+  function updateDhanurdharPosition() {
+    if (!nameWrapper || !innerNameContainer) return;
+    const rect = nameWrapper.getBoundingClientRect(); 
+    const nameHeight = innerNameContainer.offsetHeight || 100;
+    const nameWidth = innerNameContainer.offsetWidth || 300;
+    const minX = -rect.width / 2.8 + nameWidth / 2;
+    const maxX = rect.width / 2.8 - nameWidth / 2;
+    const verticalMovementRange = 60;
+    const minY = DHANURDHAR_BASE_Y_OFFSET - verticalMovementRange / 2;
+    const maxY = DHANURDHAR_BASE_Y_OFFSET + verticalMovementRange / 2;
+    dhanurdharTargetX = Math.random() * (maxX - minX) + minX;
+    dhanurdharTargetY = Math.random() * (maxY - minY) + minY;
+  }
+  function animateDhanurdhar() {
+    if (!innerNameContainer || innerNameContainer.style.opacity === '0') {
+      cancelAnimationFrame(dhanurdharAnimationId); dhanurdharAnimationId = null; return;
+    }
+    dhanurdharCurrentX += (dhanurdharTargetX - dhanurdharCurrentX) * dhanurdharMoveSpeed;
+    dhanurdharCurrentY += (dhanurdharTargetY - dhanurdharCurrentY) * dhanurdharMoveSpeed;
+    innerNameContainer.style.transform = `translateX(${dhanurdharCurrentX}px) translateY(${dhanurdharCurrentY}px) scale(1) translateZ(-25px)`; 
+    dhanurdharAnimationId = requestAnimationFrame(animateDhanurdhar);
+  }
+  function startDhanurdharMovement() {
+    if (!innerNameContainer) return;
+    isDhanurdharActive = true;
+    if (dhanurdharAnimationId) cancelAnimationFrame(dhanurdharAnimationId); 
+    if (dhanurdharIntervalId) clearInterval(dhanurdharIntervalId);
+    dhanurdharCurrentX = 0; 
+    dhanurdharCurrentY = DHANURDHAR_BASE_Y_OFFSET; 
+    innerNameContainer.style.transform = `translateX(0px) translateY(${DHANURDHAR_BASE_Y_OFFSET}px) scale(1) translateZ(-25px)`;
+    updateDhanurdharPosition(); 
+    dhanurdharIntervalId = setInterval(updateDhanurdharPosition, dhanurdharChangeTargetInterval);
+    animateDhanurdhar();
+  }
+  function stopDhanurdharMovement() {
+    isDhanurdharActive = false;
+    if (dhanurdharAnimationId) cancelAnimationFrame(dhanurdharAnimationId);
+    if (dhanurdharIntervalId) clearInterval(dhanurdharIntervalId);
+    dhanurdharAnimationId = null; dhanurdharIntervalId = null;
+  }
+
+  // --- Main Animation Logic ---
+  let isAnimatingName = false;
+  const shatterEffectDuration = 1500;
+  const imageRevealInterval = 2500; // MODIFIED: Increased for very slow image reveal
+  const delayAfterImagesForDhanurdhar = 750;
+  const dhanurdharVisibleDuration = 4200;
+  const reassembleEffectDuration = 1500;
+  const delayBeforeDhanushReassembly = 200; 
+  const DHANUSH_REASSEMBLED_Y_OFFSET = 180;
+
+  function triggerMainAnimationSequence() {
+    if (isAnimatingName || !outerNameContainer) {
+        console.log("Cannot trigger main animation: already animating or outer container missing.");
+        return;
+    }
+    isAnimatingName = true; 
+    if(nameWrapper) nameWrapper.style.transform = nameWrapperBaseTransform; 
+    
+    if (outerNameContainer.style.opacity === '1') {
+        stopLetterDance(outerNameContainer); 
+    }
+
+    const outerLetters = outerNameContainer.querySelectorAll('span');
+    const allFragmentsData = []; 
+
+    outerLetters.forEach(letter => {
+        letter.style.transition = 'none'; letter.style.opacity = '0';
+        const letterRect = letter.getBoundingClientRect(); 
+        const numFragments = 12; 
+        const fragmentColor = window.getComputedStyle(outerNameContainer).color; 
+        for (let i = 0; i < numFragments; i++) {
+            const fragment = document.createElement('div'); fragment.classList.add('letter-fragment');
+            const initialX = letterRect.left + letterRect.width / 2; 
+            const initialY = letterRect.top + letterRect.height / 2;
+            fragment.style.left = `${initialX}px`; fragment.style.top = `${initialY}px`;
+            const fragSize = Math.random() * 4 + 2; 
+            fragment.style.width = `${fragSize}px`; fragment.style.height = `${fragSize}px`;
+            fragment.style.backgroundColor = fragmentColor; 
+            fragment.style.boxShadow = `0 0 ${Math.random() * 2 + 1}px ${fragmentColor}`;
+            fragment.style.opacity = '1';
+            const initialTransform = `translate(-50%, -50%) translate3d(0,0,0) rotateX(0deg) rotateY(0deg) rotateZ(0deg)`;
+            fragment.style.transform = initialTransform;
+            fragment.style.transition = `transform ${shatterEffectDuration}ms cubic-bezier(0.25,0.46,0.45,0.94), opacity ${shatterEffectDuration*0.8}ms ease-out ${shatterEffectDuration*0.2}ms`;
+            document.body.appendChild(fragment);
+            const randomX = (Math.random()-0.5)*(window.innerWidth*0.25); 
+            const randomY = (Math.random()-0.5)*(window.innerHeight*0.25);
+            const randomZ = (Math.random()-0.5)*500; 
+            const randomRotX = (Math.random()-0.5)*450;
+            const randomRotY = (Math.random()-0.5)*450; 
+            const randomRotZ = (Math.random()-0.5)*360;
+            const explodedTransform = `translate(-50%,-50%) translate3d(${randomX}px,${randomY}px,${randomZ}px) rotateX(${randomRotX}deg) rotateY(${randomRotY}deg) rotateZ(${randomRotZ}deg)`;
+            allFragmentsData.push({ element: fragment, initialLeft: initialX, initialTop: initialY, initialTransform: initialTransform, explodedTransform: explodedTransform });
+            setTimeout(() => { fragment.style.transform = explodedTransform; fragment.style.opacity = '0'; }, 20);
+        }
+    });
+    outerNameContainer.style.opacity = '0';
+    outerNameContainer.style.transform = 'scale(0.6) translateZ(-200px)';
+    outerNameContainer.style.zIndex = '9';
+
+    const imagePositions = [
+        { x: 0,    y: -200, z: 50, rotateX: -10, rotateY: 0 },    
+        { x: -260, y: -150, z: 20, rotateX: -5,  rotateY: 20 },   
+        { x: 260,  y: -150, z: 20, rotateX: -5,  rotateY: -20 }   
+    ];
+
+    allImageContainers.forEach((imgContainer, index) => {
+      if (!imgContainer) { console.error(`Image container ${index+1} not found.`); return; }
+      setTimeout(() => {
+        imgContainer.style.opacity = '1';
+        imgContainer.style.transform = `
+          translateX(${imagePositions[index].x}px) 
+          translateY(${imagePositions[index].y}px) 
+          translateZ(${imagePositions[index].z}px) 
+          rotateX(${imagePositions[index].rotateX}deg) 
+          rotateY(${imagePositions[index].rotateY}deg) 
+          scale(1)`;
+        imgContainer.style.zIndex = '12'; 
+      }, shatterEffectDuration * 0.2 + (index * imageRevealInterval)); 
+    });
+
+    const totalImageRevealTime = shatterEffectDuration * 0.2 + (allImageContainers.length * imageRevealInterval);
+    setTimeout(() => {
+      if (!innerNameContainer) { console.error("Inner name container not found for reveal."); return; }
+      innerNameContainer.style.opacity = '1';
+      innerNameContainer.style.transform = `translateX(0px) translateY(${DHANURDHAR_BASE_Y_OFFSET}px) scale(1) translateZ(-25px)`; 
+      innerNameContainer.style.zIndex = '11'; 
+      startDhanurdharMovement();
+      if (songPlayedOnce && song && !song.paused) startLetterDance(innerNameContainer); 
+    }, totalImageRevealTime + delayAfterImagesForDhanurdhar);
+
+    setTimeout(() => {
+      stopDhanurdharMovement();
+      stopLetterDance(innerNameContainer); 
+      if (innerNameContainer) {
+        innerNameContainer.style.opacity = '0';
+        innerNameContainer.style.transform = `scale(0.3) translateZ(-180px) translateX(${dhanurdharCurrentX}px) translateY(${dhanurdharCurrentY}px)`;
+        innerNameContainer.style.zIndex = '10';
+      }
+
+      setTimeout(() => { 
+        allFragmentsData.forEach(fragmentData => {
+            const fragment = fragmentData.element;
+            fragment.style.transition = `transform ${reassembleEffectDuration}ms cubic-bezier(0.55,0.055,0.675,0.19), opacity ${reassembleEffectDuration}ms ease-in`;
+            fragment.style.transform = fragmentData.initialTransform; 
+            fragment.style.opacity = '0.7'; 
+        });
+
+        setTimeout(() => {
+          allFragmentsData.forEach(fragmentData => { if (fragmentData.element.parentNode) fragmentData.element.parentNode.removeChild(fragmentData.element); });
+          allFragmentsData.length = 0;
+          if (outerNameContainer) {
+            const lettersToReshow = outerNameContainer.querySelectorAll('span');
+            lettersToReshow.forEach(letter => { letter.style.transition = 'opacity 0.5s ease-in-out'; letter.style.opacity = '1'; });
+            outerNameContainer.style.opacity = '1';
+            outerNameContainer.style.transform = `scale(1) translateY(${DHANUSH_REASSEMBLED_Y_OFFSET}px) translateZ(0px)`; 
+            outerNameContainer.style.zIndex = '15'; 
+            if (songPlayedOnce && song && !song.paused) startLetterDance(outerNameContainer); 
+          }
+          isAnimatingName = false; 
+        }, reassembleEffectDuration + 50);
+      }, delayBeforeDhanushReassembly);
+    }, totalImageRevealTime + delayAfterImagesForDhanurdhar + dhanurdharVisibleDuration);
+  } 
+
+  // Click listener for nameWrapper
+  if (nameWrapper) {
+    nameWrapper.addEventListener('click', (event) => {
+        event.stopPropagation(); 
+        if (isAnimatingName) { return; } 
+        if (!hasInteractedGlobal && song && song.paused) {
+            song.play().catch(error => { console.error("Error playing song on first name click:", error); });
+            hasInteractedGlobal = true; 
+            songPlayedOnce = true;
+            if (outerNameContainer && outerNameContainer.style.opacity === '1') { 
+                startLetterDance(outerNameContainer); 
+            }
+        }
+        triggerMainAnimationSequence(); 
+    });
+  } else {
+    console.error("Name wrapper for click listener not found.")
+  }
+
+  // Click listener for the entire body
+  document.body.addEventListener('click', (event) => {
+    if (nameWrapper && nameWrapper.contains(event.target)) {
+        return;
+    }
+    if (isAnimatingName) { 
+        console.log("Body click ignored for song: Main animation in progress.");
+        return;
+    }
+    if (!hasInteractedGlobal && song) { 
+        song.play().catch(error => { console.error("Error playing song on first body click:", error); });
+        hasInteractedGlobal = true;
+        songPlayedOnce = true;
+        if (outerNameContainer && outerNameContainer.style.opacity === '1') {
+            startLetterDance(outerNameContainer);
+        }
+    } else if (hasInteractedGlobal && songPlayedOnce && song) { 
+        if (song.paused) {
+            song.play().catch(error => console.error("Error playing song on body click:", error));
+            if (outerNameContainer && outerNameContainer.style.opacity === '1') { startLetterDance(outerNameContainer); }
+            else if (innerNameContainer && innerNameContainer.style.opacity === '1' && isDhanurdharActive) { startLetterDance(innerNameContainer); }
+        } else {
+            song.pause();
+            stopLetterDance(outerNameContainer);
+            stopLetterDance(innerNameContainer);
+        }
+    }
+  });
+
+  // --- Particle Swarm Logic ---
+  const PARTICLE_COUNT = 180; 
+  const particles = [];
+  const space = { width: window.innerWidth, height: window.innerHeight, depth: 900 }; 
+  const swarmCenter = { x: space.width / 2, y: space.height / 2, z: space.depth / 2 };
+  let swarmAnimationId = null; 
+  
+  function createParticles() { 
+    if (!swarmElementContainer) { console.error("Swarm container not found."); return; }
+    swarmElementContainer.innerHTML = ''; 
+    particles.length = 0; 
+    for (let i = 0; i < PARTICLE_COUNT; i++) {
+      const p = document.createElement('div'); p.className = 'particle';
+      const x = Math.random() * space.width; const y = Math.random() * space.height; const z = Math.random() * space.depth;
+      const velocity = { x: (Math.random() - 0.5) * 0.7, y: (Math.random() - 0.5) * 0.7, z: (Math.random() - 0.5) * 0.7 };
+      swarmElementContainer.appendChild(p);
+      particles.push({ elem: p, x, y, z, vx: velocity.x, vy: velocity.y, vz: velocity.z });
+    }
+  }
+  const swarmFocalLength = parseFloat(getComputedStyle(document.body).perspective) || 1000;
+  function projectSwarmParticle(x, y, z) { 
+    const effectiveZ = z - swarmCenter.z; const scale = swarmFocalLength / (swarmFocalLength + effectiveZ);
+    const screenX = swarmCenter.x + (x - swarmCenter.x) * scale; const screenY = swarmCenter.y + (y - swarmCenter.y) * scale;
+    return { x: screenX, y: screenY, scale: Math.max(0.01, scale) }; 
+  }
+  let mouseSwarm = { x: swarmCenter.x, y: swarmCenter.y, active: false };
+  function animateSwarm() { 
+    particles.forEach(p => {
+      p.x += p.vx; p.y += p.vy; p.z += p.vz;
+      if (p.x < 0 || p.x > space.width) { p.vx *= -1; p.x = Math.max(0, Math.min(p.x, space.width)); }
+      if (p.y < 0 || p.y > space.height) { p.vy *= -1; p.y = Math.max(0, Math.min(p.y, space.height)); }
+      if (p.z < -swarmFocalLength * 0.2) p.z = space.depth; else if (p.z > space.depth) p.z = -swarmFocalLength * 0.1;
+      if (mouseSwarm.active) {
+        const dx = p.x - mouseSwarm.x; const dy = p.y - mouseSwarm.y; const dz = p.z - swarmCenter.z; 
+        const distSq = dx * dx + dy * dy + dz * dz * 0.3; const minDist = 220 * 220; 
+        if (distSq < minDist && distSq > 1) {
+          const dist = Math.sqrt(distSq); const force = (minDist - distSq) / minDist * 0.08; 
+          p.vx += force * (dx / dist); p.vy += force * (dy / dist); p.vz += force * (dz / dist) * 0.3;
+          p.vx = Math.max(Math.min(p.vx, 2.5), -2.5); p.vy = Math.max(Math.min(p.vy, 2.5), -2.5); p.vz = Math.max(Math.min(p.vz, 1.5), -1.5);
+        }
+      }
+      const proj = projectSwarmParticle(p.x, p.y, p.z);
+      p.elem.style.transform = `translate3d(${proj.x - 4}px, ${proj.y - 4}px, 0) scale(${proj.scale.toFixed(3)})`;
+      let opacity = Math.min(Math.max(proj.scale * 1.7, 0.05), 1); opacity = opacity * opacity; 
+      p.elem.style.opacity = opacity.toFixed(3); p.elem.style.zIndex = Math.floor(proj.scale * 1000);
+    });
+    swarmAnimationId = requestAnimationFrame(animateSwarm);
+  }
+  function onSwarmPointerMove(e) { mouseSwarm.x = e.clientX; mouseSwarm.y = e.clientY; mouseSwarm.active = true; }
+  function onSwarmPointerLeave() { mouseSwarm.active = false; }
+  
+  // --- Initialize and start everything ---
+  function initializeAll() {
+    if (outerNameContainer && innerNameContainer) {
+        createNameLetters(outerNameContainer, outerNameText);
+        createNameLetters(innerNameContainer, innerNameText);
+    }
+    if (swarmElementContainer) {
+        createParticles(); 
+        if (particles.length > 0 && !swarmAnimationId) { 
+            animateSwarm();
+        }
+        document.body.addEventListener('mousemove', onSwarmPointerMove); 
+        document.body.addEventListener('mouseleave', onSwarmPointerLeave); 
+    }
+    window.addEventListener('resize', () => { 
+        if (swarmElementContainer) {
+            space.width = window.innerWidth; 
+            space.height = window.innerHeight;
+            swarmCenter.x = space.width / 2; 
+            swarmCenter.y = space.height / 2; 
+        }
+    });
+  }
+
+  if (outerNameContainer && innerNameContainer && nameWrapper && imageContainer1 && swarmElementContainer && song) {
+    initializeAll();
+  } else {
+    console.error("One or more essential DOM elements were not found. Initialization aborted.");
+    if (!outerNameContainer) console.error("outerNameContainer is missing");
+    if (!innerNameContainer) console.error("innerNameContainer is missing");
+    if (!nameWrapper) console.error("nameWrapper is missing");
+    if (!imageContainer1) console.error("imageContainer1 is missing");
+    if (!swarmElementContainer) console.error("swarmElementContainer is missing");
+    if (!song) console.error("song element is missing");
+  }
+</script>
+</body>
+</html>
